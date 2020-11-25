@@ -1,40 +1,23 @@
 ﻿namespace Lab2
 
-open Elmish
 open Avalonia
 open Avalonia.Controls.ApplicationLifetimes
-open Avalonia.Input
 open Avalonia.FuncUI
-open Avalonia.FuncUI.Elmish
-open Avalonia.FuncUI.Components.Hosts
 
-type MainWindow() as this =
-    inherit HostWindow()
-
-    do
-        base.Title <- "Lab2"
-        base.Width <- 800.0
-        base.Height <- 800.0
-
-        //this.VisualRoot.VisualRoot.Renderer.DrawFps <- true
-        //this.VisualRoot.VisualRoot.Renderer.DrawDirtyRects <- true
-
-
-        Elmish.Program.mkSimple (fun () -> Counter.init) Counter.update Counter.view
-        |> Program.withHost this
-        |> Program.run
-
-
+/// This is your application you can ose the initialize method to load styles
+/// or handle Life Cycle events of your application
 type App() =
     inherit Application()
 
     override this.Initialize() =
         this.Styles.Load "avares://Avalonia.Themes.Default/DefaultTheme.xaml"
         this.Styles.Load "avares://Avalonia.Themes.Default/Accents/BaseDark.xaml"
+    // this.Styles.Load "avares://Lab1/Styles.xaml"
 
     override this.OnFrameworkInitializationCompleted() =
         match this.ApplicationLifetime with
-        | :? IClassicDesktopStyleApplicationLifetime as desktopLifetime -> desktopLifetime.MainWindow <- MainWindow()
+        | :? IClassicDesktopStyleApplicationLifetime as desktopLifetime ->
+            desktopLifetime.MainWindow <- Shell.MainWindow()
         | _ -> ()
 
 module Program =
