@@ -24,7 +24,6 @@ module Shell =
 
     module Controller =
         open System.IO
-        open System.Text.Json
 
         let update (msg: Msg) (state: State): State * Cmd<_> =
             match msg with
@@ -42,26 +41,17 @@ module Shell =
                         File.ReadAllText state.SaveFileState.ChosenFile
 
                     let mainViewMsg =
-                        MainView.Controller.update
-                            (newState
-
-                             |> MainView.LoadXML)
-                            state.MainViewState
+                        MainView.Controller.update (newState |> MainView.LoadXML) state.MainViewState
 
                     { state with
                           MainViewState = mainViewMsg },
                     Cmd.none
                 | SaveFile.SaveMsg ->
-                    File.WriteAllText(state.SaveFileState.ChosenFile, JsonSerializer.Serialize state.MainViewState.Xml)
                     { state with
-                          SaveFileState =
-                              { state.SaveFileState with
-                                    Files =
-                                        if List.contains state.SaveFileState.ChosenFile state.SaveFileState.Files then
-                                            state.SaveFileState.Files
-                                        else
-                                            state.SaveFileState.Files
-                                            @ [ state.SaveFileState.ChosenFile ] } },
+                          MainViewState =
+                              MainView.Controller.update
+                                  (MainView.GenerateHTML state.SaveFileState.ChosenFile)
+                                  state.MainViewState },
                     Cmd.none
                 | _ ->
                     let saveFileMsg =
@@ -85,16 +75,16 @@ module Shell =
                                                                                                                          (MainViewMsg
                                                                                                                           >> dispatch)) ]
                                                                                                TabItem.create [ TabItem.header
-                                                                                                                    "About"
-                                                                                                                TabItem.content
-                                                                                                                    (About.View.view.Value) ]
-                                                                                               TabItem.create [ TabItem.header
                                                                                                                     "File"
                                                                                                                 TabItem.content
                                                                                                                     (SaveFile.View.view
                                                                                                                         state.SaveFileState
                                                                                                                          (SaveFileMsg
-                                                                                                                          >> dispatch)) ] ] ] ] ]
+                                                                                                                          >> dispatch)) ]
+                                                                                               TabItem.create [ TabItem.header
+                                                                                                                    "About"
+                                                                                                                TabItem.content
+                                                                                                                    (About.View.view.Value) ] ] ] ] ]
 
     /// This is the main window of your application
     /// you can do all sort of useful things here like setting heights and widths

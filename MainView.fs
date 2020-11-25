@@ -17,12 +17,10 @@ module MainView =
         | SetToDOM
         | SetToLINQ
         | LoadXML of string
-        | GenerateHTML
+        | GenerateHTML of string
 
     module Utils =
         open Avalonia.Controls
-        open Avalonia.Media
-        open Avalonia.Layout
 
         let mainWindow () =
             (Avalonia.Application.Current.ApplicationLifetime :?> ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime).MainWindow
@@ -36,10 +34,8 @@ module MainView =
             | SetToDOM -> { state with Type = DOM }
             | SetToLINQ -> { state with Type = LINQ }
             | LoadXML newXML -> { state with Xml = newXML }
-            | GenerateHTML ->
-                // let xml = File.ReadAllText "customers.xml"
-                let html = parseXML state.Type "customers.xml"
-                File.WriteAllText("customers.html", html)
+            | GenerateHTML path ->
+                File.WriteAllText(path, parseXML state.Type state.Xml)
                 state
 
     module View =
@@ -68,9 +64,7 @@ module MainView =
                                  UniformGrid.verticalAlignment VerticalAlignment.Top
                                  UniformGrid.children [ controlButton "SAX API" (fun _ -> dispatch SetToSAX)
                                                         controlButton "DOM API" (fun _ -> dispatch SetToDOM)
-                                                        controlButton "LINQ to XML" (fun _ -> dispatch SetToLINQ)
-                                                        controlButton "SaveHTML" (fun _ -> dispatch GenerateHTML)
-                                                        controlButton "LoadHTML" (fun _ -> ()) ] ]
+                                                        controlButton "LINQ to XML" (fun _ -> dispatch SetToLINQ) ] ]
 
         let view (state: State) dispatch =
             DockPanel.create [ DockPanel.children [ controlButtons dispatch
