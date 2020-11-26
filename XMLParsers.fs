@@ -83,7 +83,7 @@ module XMLParsers =
 
     type OutputXml = XmlProvider<OrderLinesXmlSample>
 
-    let parseLINQ xmlsrc =
+    let parseLINQold xmlsrc =
         let xml = File.ReadAllText xmlsrc
         let realXML = InputXml.Parse xml
         let head = OutputXml.GetSample().Head
@@ -105,30 +105,56 @@ module XMLParsers =
         let html = OutputXml.Html(head, body)
         html |> sprintf "%A"
 
+    let parseLINQ xmlsrc =
+        // let xml = File.ReadAllText xmlsrc
+        // let realXML = InputXml.Parse xml
+        let realXML = InputXml.Parse xmlsrc
+        Array.reduce
+            (sprintf "%s\n\n%s")
+            [| for customer in realXML.Customers do
+                yield
+                    sprintf "Customer: %s\n%s" customer.Name
+                        ([| for order in customer.Orders do
+                                yield
+                                    [| for line in order.OrderLines do
+                                        yield sprintf "\t\tItem: %s\n\t\tQuantity: %i" line.Item line.Quantity |]
+                                    |> Array.reduce (sprintf "%s\n%s")
+                                    |> sprintf "\tOrder: %s\n%s" order.Number |]
+                         |> Array.reduce (sprintf "%s\n%s")) |]
+
 
 
     let parseSAX (xml: string) =
         let reader = XmlReader.Create xml
-        seq {
-            while reader.Read() do
-                if reader.NodeType = XmlNodeType.Element then
-                    yield reader.Name
-                    while reader.MoveToNextAttribute() do
-                        yield sprintf "%s = %s" reader.Name reader.Value
-                else
-                    yield sprintf "/%s" reader.Name
-        }
-        |> Seq.reduce (sprintf "%s\n%s")
+        [| while reader.Read() do
+            if reader.NodeType = XmlNodeType.Element then
+                yield reader.Name
+                while reader.MoveToNextAttribute() do
+                    yield sprintf "%s = %s" reader.Name reader.Value
+            else
+                yield sprintf "/%s" reader.Name |]
+        |> Array.reduce (sprintf "%s\n%s")
 
     let parseDOM (xml: string) =
         let doc = XmlDocument()
         doc.LoadXml xml
 
         let src =
-            [| for node in doc.DocumentElement.ChildNodes do
-                yield node.Name |]
+            [| for customer in doc.DocumentElement.ChildNodes do
+                yield
+                    sprintf "%s: %s\n%s" customer.Name (customer.Attributes.ItemOf(0).Value)
+                        ([| for order in customer.ChildNodes do
+                                yield
+                                    sprintf "\t%s: %s\n%s" order.Name (order.Attributes.ItemOf(0).Value)
+                                        ([| for orderLine in order.ChildNodes do
+                                                yield
+                                                    ([| for attr in orderLine.Attributes do
+                                                            yield sprintf "\t\t%s: %s" attr.Name attr.Value |]
+                                                     |> Array.reduce (sprintf "%s\n%s")) |]
+                                         |> Array.reduce (sprintf "%s\n%s")) |]
+                         |> Array.reduce (sprintf "%s\n%s")) |]
 
-        Array.reduce (sprintf "%s\n%s") src
+        Array.reduce (sprintf "%s\n\n%s") src
 
     let parseXML =
         function

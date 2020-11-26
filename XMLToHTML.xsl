@@ -2,35 +2,35 @@
     <xsl:template match="Customers">
         <HTML>
             <BODY>
-                <UI>
+                <UL>
                     <xsl:apply-templates select="Customer"/>
-                </UI>
+                </UL>
             </BODY>
         </HTML>
     </xsl:template>
     <xsl:template match="Customer">
         <LI>
             <xsl:text>Customer: </xsl:text>
-            <xsl:value-of select="@Name"/>
-            <UI>
+            <xsl:value-of select="@name"/>
+            <UL>
                 <xsl:apply-templates select="Order"/>
-            </UI>
+            </UL>
         </LI>
     </xsl:template>
     <xsl:template match="Order">
         <LI>
             <xsl:text>Order: </xsl:text>
             <xsl:value-of select="@Number"/>
-            <UI>
+            <UL>
                 <xsl:apply-templates select="OrderLine"/>
-            </UI>
+            </UL>
         </LI>
     </xsl:template>
     <xsl:template match="OrderLine">
         <LI>
             <xsl:text>Item: </xsl:text>
             <xsl:value-of select="@Item"/>
-            <xsl:text>&#10;</xsl:text>
+            <xsl:text>&#xA;</xsl:text>
             <xsl:text>Quantity: </xsl:text>
             <xsl:value-of select="@Quantity"/>
         </LI>

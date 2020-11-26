@@ -1,5 +1,7 @@
 ﻿namespace Lab2
 
+open System.Xml.Xsl
+
 module MainView =
 
     open XMLParsers
@@ -35,7 +37,10 @@ module MainView =
             | SetToLINQ -> { state with Type = LINQ }
             | LoadXML newXML -> { state with Xml = newXML }
             | GenerateHTML path ->
-                File.WriteAllText(path, parseXML state.Type state.Xml)
+                let xslt = XslCompiledTransform()
+                xslt.Load("XMLToHTML.xsl")
+                xslt.Transform(path, path.Replace(".xml", ".html"))
+                // File.WriteAllText(path, parseXML state.Type state.Xml)
                 state
 
     module View =
@@ -51,7 +56,7 @@ module MainView =
                             Button.fontSize 14.0
                             Button.verticalAlignment VerticalAlignment.Center
                             Button.horizontalAlignment HorizontalAlignment.Center
-                            Button.width 75.0
+                            Button.width 100.0
                             Button.height 25.0
                             Button.onClick fn ]
 
@@ -69,9 +74,8 @@ module MainView =
         let view (state: State) dispatch =
             DockPanel.create [ DockPanel.children [ controlButtons dispatch
                                                     TextBlock.create [ TextBlock.dock Dock.Top
-                                                                       TextBlock.fontSize 48.0
-                                                                       TextBlock.verticalAlignment
-                                                                           VerticalAlignment.Center
+                                                                       TextBlock.fontSize 14.0
+                                                                       TextBlock.verticalAlignment VerticalAlignment.Top
                                                                        TextBlock.horizontalAlignment
-                                                                           HorizontalAlignment.Center
-                                                                       TextBlock.text (string state.Type) ] ] ]
+                                                                           HorizontalAlignment.Left
+                                                                       TextBlock.text (parseXML state.Type state.Xml) ] ] ]

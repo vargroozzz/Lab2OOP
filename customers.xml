@@ -1,5 +1,5 @@
 <Customers>
-    <Customer Name="ACME">
+    <Customer name="ACME">
         <Order Number="A012345">
             <OrderLine Item="widget" Quantity="1"/>
             <OrderLine Item="widget2" Quantity="3"/>
@@ -10,7 +10,7 @@
             <OrderLine Item="trinket14" Quantity="3"/>
         </Order>
     </Customer>
-    <Customer Name="Southwind">
+    <Customer name="Southwind">
         <Order Number="A012347">
             <OrderLine Item="skyhook" Quantity="3"/>
             <OrderLine Item="gizmo" Quantity="4"/>
