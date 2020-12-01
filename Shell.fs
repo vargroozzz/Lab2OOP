@@ -1,5 +1,6 @@
 namespace Lab2
 
+
 module Shell =
     open Elmish
 
@@ -24,16 +25,26 @@ module Shell =
 
     module Controller =
         open System.IO
+        open System.Xml.Xsl
 
         let update (msg: Msg) (state: State): State * Cmd<_> =
             match msg with
             | MainViewMsg mainviewmsg ->
-                let mainViewMsg =
-                    MainView.Controller.update mainviewmsg state.MainViewState
+                match mainviewmsg with
+                | MainView.GenerateHTML ->
+                    let xslt = XslCompiledTransform()
+                    xslt.Load("XMLToHTML.xsl")
+                    let path = state.SaveFileState.ChosenFile
+                    xslt.Transform(path, path.Replace(".xml", ".html"))
+                    // File.WriteAllText(path, parseXML state.Type state.Xml)
+                    state, Cmd.none
+                | _ ->
+                    let mainViewMsg =
+                        MainView.Controller.update mainviewmsg state.MainViewState
 
-                { state with
-                      MainViewState = mainViewMsg },
-                Cmd.none
+                    { state with
+                          MainViewState = mainViewMsg },
+                    Cmd.none
             | SaveFileMsg savefilemsg ->
                 match savefilemsg with
                 | SaveFile.LoadMsg ->
@@ -47,12 +58,10 @@ module Shell =
                           MainViewState = mainViewMsg },
                     Cmd.none
                 | SaveFile.SaveMsg ->
-                    { state with
-                          MainViewState =
-                              MainView.Controller.update
-                                  (MainView.GenerateHTML state.SaveFileState.ChosenFile)
-                                  state.MainViewState },
-                    Cmd.none
+                    File.WriteAllText
+                        (state.SaveFileState.ChosenFile,
+                         XMLParsers.filterXML state.MainViewState.Filter state.MainViewState.Xml)
+                    state, Cmd.none
                 | _ ->
                     let saveFileMsg =
                         SaveFile.Controller.update savefilemsg state.SaveFileState

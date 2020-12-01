@@ -21,10 +21,8 @@ module About =
                                                                               TextBlock.fontSize 18.0
                                                                               TextBlock.text
                                                                                   ("Доступні операції:\n"
-                                                                                   + "Linq\n"
-                                                                                   + "Save, Load\n"
-                                                                                   + "DOM in process...\n"
-                                                                                   + "SAX in process...") ] ] ])
+                                                                                   + "Linq, DOM, SAX\n"
+                                                                                   + "Save, Load") ] ] ])
 
         let view =
             lazy

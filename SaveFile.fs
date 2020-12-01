@@ -16,7 +16,7 @@ module SaveFile =
         | QuitMsg
 
     let init =
-        { ChosenFile = ""
+        { ChosenFile = "customers.xml"
           Files =
               (DirectoryInfo(Directory.GetCurrentDirectory())).GetFiles("*.xml")
               |> Array.toList

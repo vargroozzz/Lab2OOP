@@ -1,14 +1,22 @@
 namespace Lab2
 
+
 module XMLParsers =
     open FSharp.Data
     open System.Xml
+    open System.Xml.Linq
     open System.IO
 
     type ParseType =
         | SAX
         | DOM
         | LINQ
+
+    type Filter =
+        { Customer: string
+          Order: string
+          ItemName: string
+          Quantity: int option }
 
     [<Literal>]
     let CustomersXmlSample = """
@@ -29,88 +37,58 @@ module XMLParsers =
                   </Customer>
                 </Customers>"""
 
-    [<Literal>]
-    let OrderLinesXmlSample = """
-    <html>
-        <head>
-            <title>XML Parser</title>
-        </head>
-        <body>
-            <ul>
-                <li>ACME
-                    <ul>
-                        <li>Order: A012345
-                            <ul>
-                                <li>
-                                    Item: widget
-                                    Quantity: 1
-                                </li>
-                            </ul>
-                        </li>
-                        <li>Order: A012346
-                            <ul>
-                                <li>
-                                    Item: trinket
-                                    Quantity: 2
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-                </li>
-                <li>Southwind
-                    <ul>
-                        <li>Order: A012347
-                            <ul>
-                                <li>
-                                    Item: skyhook
-                                    Quantity: 3
-                                </li>
-                                <li>
-                                    Item: gizmo
-                                    Quantity: 4
-                                </li>
-                            </ul>
-                        </li>
-
-                    </ul>
-                </li>
-            </ul>
-
-        </body>
-    </html>"""
-
     type InputXml = XmlProvider<CustomersXmlSample>
 
-    type OutputXml = XmlProvider<OrderLinesXmlSample>
-
-    let parseLINQold xmlsrc =
-        let xml = File.ReadAllText xmlsrc
+    let filterXML filter xml =
         let realXML = InputXml.Parse xml
-        let head = OutputXml.GetSample().Head
 
-        let body =
-            OutputXml.Body
-                (OutputXml.Ul [| for customer in realXML.Customers do
-                                     yield
-                                         OutputXml.Li
-                                             (OutputXml.Ul2 [| for order in customer.Orders do
-                                                                   yield
-                                                                       OutputXml.Li2
-                                                                           (OutputXml.Ul3 [| for line in order.OrderLines do
-                                                                                                 yield
-                                                                                                     sprintf "Item: %s\nQuantity: %i"
-                                                                                                         line.Item
-                                                                                                         line.Quantity |]) |]) |])
+        let lineFilter (line: InputXml.OrderLine) =
+            (line.Item = filter.ItemName
+             && Some(line.Quantity) = filter.Quantity)
+            || (filter.ItemName = ""
+                && Some(line.Quantity) = filter.Quantity)
+            || (line.Item = filter.ItemName
+                && filter.Quantity = None)
+            || (filter.ItemName = "" && filter.Quantity = None)
 
-        let html = OutputXml.Html(head, body)
-        html |> sprintf "%A"
+        let orderFilter (order: InputXml.Order) =
+            (order.Number = filter.Order || filter.Order = "")
+            && Array.exists lineFilter order.OrderLines
 
-    let parseLINQ xmlsrc =
+        let customerFilter (customer: InputXml.Customer) =
+            (customer.Name = filter.Customer
+             || filter.Customer = "")
+            && Array.exists orderFilter customer.Orders
+
+        let filteredXML =
+            InputXml.Customers [| for customer in realXML.Customers do
+                                      if customerFilter customer then
+                                          yield
+                                              InputXml.Customer
+                                                  (customer.Name,
+                                                   [| for order in customer.Orders do
+                                                       if orderFilter order then
+                                                           yield
+                                                               InputXml.Order
+                                                                   (order.Number,
+                                                                    [| for line in order.OrderLines do
+                                                                        if lineFilter line then
+                                                                            yield
+                                                                                InputXml.OrderLine
+                                                                                    (line.Item, line.Quantity) |]) |]) |]
+
+        filteredXML.ToString()
+
+    let parseLINQ filter xmlsrc =
         // let xml = File.ReadAllText xmlsrc
         // let realXML = InputXml.Parse xml
-        let realXML = InputXml.Parse xmlsrc
-        Array.reduce
+
+        let realXML =
+            xmlsrc |> filterXML filter |> InputXml.Parse
+
+        Array.fold
             (sprintf "%s\n\n%s")
+            ""
             [| for customer in realXML.Customers do
                 yield
                     sprintf "Customer: %s\n%s" customer.Name
@@ -118,14 +96,16 @@ module XMLParsers =
                                 yield
                                     [| for line in order.OrderLines do
                                         yield sprintf "\t\tItem: %s\n\t\tQuantity: %i" line.Item line.Quantity |]
-                                    |> Array.reduce (sprintf "%s\n%s")
+                                    |> Array.fold (sprintf "%s\n%s") ""
                                     |> sprintf "\tOrder: %s\n%s" order.Number |]
-                         |> Array.reduce (sprintf "%s\n%s")) |]
+                         |> Array.fold (sprintf "%s\n%s") "") |]
 
 
 
-    let parseSAX (xml: string) =
-        let reader = XmlReader.Create xml
+    let parseSAXOld filter (xml: string) =
+        let reader =
+            xml |> filterXML filter |> XmlReader.Create
+
         [| while reader.Read() do
             if reader.NodeType = XmlNodeType.Element then
                 yield reader.Name
@@ -135,9 +115,32 @@ module XMLParsers =
                 yield sprintf "/%s" reader.Name |]
         |> Array.reduce (sprintf "%s\n%s")
 
-    let parseDOM (xml: string) =
+
+    let parseSAX filter xmlsrc =
+        // let xml = File.ReadAllText xmlsrc
+        // let realXML = InputXml.Parse xml
+
+        let realXML =
+            xmlsrc |> filterXML filter |> InputXml.Parse
+
+        Array.fold
+            (sprintf "%s\n\n%s")
+            ""
+            [| for customer in realXML.Customers do
+                yield
+                    sprintf "Customer: %s\n%s" customer.Name
+                        ([| for order in customer.Orders do
+                                yield
+                                    [| for line in order.OrderLines do
+                                        yield sprintf "\t\tItem: %s\n\t\tQuantity: %i" line.Item line.Quantity |]
+                                    |> Array.fold (sprintf "%s\n%s") ""
+                                    |> sprintf "\tOrder: %s\n%s" order.Number |]
+                         |> Array.fold (sprintf "%s\n%s") "") |]
+
+    let parseDOM filter (xml: string) =
+
         let doc = XmlDocument()
-        doc.LoadXml xml
+        xml |> filterXML filter |> doc.LoadXml
 
         let src =
             [| for customer in doc.DocumentElement.ChildNodes do
@@ -159,5 +162,6 @@ module XMLParsers =
     let parseXML =
         function
         | SAX -> parseSAX
+        // | SAX -> parseLINQ
         | DOM -> parseDOM
         | LINQ -> parseLINQ

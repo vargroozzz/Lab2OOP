@@ -1,19 +1,26 @@
 <Customers>
-    <Customer name="ACME">
-        <Order Number="A012345">
-            <OrderLine Item="widget" Quantity="1"/>
-            <OrderLine Item="widget2" Quantity="3"/>
+    <Customer name="Andrey">
+        <Order Number="A0123">
+            <OrderLine Item="widget" Quantity="1" />
+            <OrderLine Item="trinket" Quantity="2" />
+            <OrderLine Item="cabel" Quantity="3" />
+            <OrderLine Item="gizmo" Quantity="4" />
         </Order>
-        <Order Number="A012346">
-            <OrderLine Item="trinket" Quantity="2"/>
-            <OrderLine Item="trinket23" Quantity="1"/>
-            <OrderLine Item="trinket14" Quantity="3"/>
+        <Order Number="A0124">
+            <OrderLine Item="trinket" Quantity="2" />
+            <OrderLine Item="cabel" Quantity="1" />
+            <OrderLine Item="gizmo" Quantity="3" />
         </Order>
     </Customer>
-    <Customer name="Southwind">
-        <Order Number="A012347">
-            <OrderLine Item="skyhook" Quantity="3"/>
-            <OrderLine Item="gizmo" Quantity="4"/>
+    <Customer name="Alex">
+        <Order Number="A0125">
+            <OrderLine Item="skyhook" Quantity="3" />
+            <OrderLine Item="gizmo" Quantity="4" />
+        </Order>
+        <Order Number="A0126">
+            <OrderLine Item="trinket" Quantity="2" />
+            <OrderLine Item="skyhook" Quantity="1" />
+            <OrderLine Item="widget" Quantity="3" />
         </Order>
     </Customer>
 </Customers>
